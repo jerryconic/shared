@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>Azure AI Language API Demo</title>
+</head>
+<body>
+
+    <h2>Azure AI Language API Demo</h2>
+
+    <textarea id="txtInput" rows="5" cols="60">今天天氣很好</textarea>
+    <br><br>
+
+    <button onclick="sendRequest()">送出分析</button>
+
+    <h3>回傳結果</h3>
+    <pre id="result"></pre>
+
+    <script>
+        const endpoint =
+            "https://azure-language-ucom.cognitiveservices.azure.com/language/:analyze-text?api-version=2024-11-01";
+
+       const apiKey = "29T9Nb2O6I8Ni9s4tDj85kbPTZ9yaOGJa4YtJxSqAhSAAGu6ltABJQQJ99CGACYeBjFXJ3w3AAAaACOGPchy";
+
+        async function sendRequest() {
+            const text = document
+                .getElementById("txtInput")
+                .value
+                .trim();
+
+            const result = document.getElementById("result");
+
+            if (!text) {
+                alert("請輸入文字");
+                return;
+            }
+
+            result.textContent = "分析中...";
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json; charset=utf-8",
+                        "Ocp-Apim-Subscription-Key": apiKey
+                    },
+                    body: JSON.stringify({
+                        kind: "LanguageDetection",
+                        analysisInput: {
+                            documents: [
+                                {
+                                    id: "1",
+                                    text: text
+                                }
+                            ]
+                        }
+                    })
+                });
+
+                const responseText = await response.text();
+
+                if (!response.ok) {
+                    throw new Error(
+                        `HTTP ${response.status}\n${responseText}`
+                    );
+                }
+
+                const data = JSON.parse(responseText);
+
+                result.textContent =
+                    JSON.stringify(data, null, 2);
+            }
+            catch (error) {
+                result.textContent =
+                    "呼叫失敗：\n" + error.message;
+            }
+        }
+    </script>
+
+</body>
+</html>

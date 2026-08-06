@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>AI-901 NLP Demo</title>
+</head>
+<body>
+    <h2>Azure AI Language Demo</h2>
+
+    <p>輸入文字：</p>
+    <textarea id="txtInput" rows="5" cols="60">今天的課程很有趣</textarea>
+    <br><br>
+
+    <button id="btnLanguage" onclick="detectLanguage()">偵測語言</button>
+    <button id="btnSentiment" onclick="analyzeSentiment()">判斷語意</button>
+
+    <h3>結果</h3>
+    <pre id="result"></pre>
+
+    <script>
+       const endpoint = "https://azure-language-ucom.cognitiveservices.azure.com/language/:analyze-text?api-version=2024-11-01";
+       const apiKey = "29T9Nb2O6I8Ni9s4tDj85kbPTZ9yaOGJa4YtJxSqAhSAAGu6ltABJQQJ99CGACYeBjFXJ3w3AAAaACOGPchy";
+        async function callLanguageApi(kind) {
+            const text = document.getElementById("txtInput").value.trim();
+            const result = document.getElementById("result");
+
+            if (text.length === 0) {
+                alert("請輸入文字");
+                return;
+            }
+
+            if (text.length > 6000) {
+                alert("最多輸入6000個字");
+                return;
+            }
+
+            result.textContent = "分析中...";
+
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Ocp-Apim-Subscription-Key": apiKey
+                },
+                body: JSON.stringify({
+                    kind: kind,
+                    analysisInput: {
+                        documents: [
+                            {
+                                id: "1",
+                                text: text
+                            }
+                        ]
+                    }
+                })
+            });
+
+            const data = await response.json();
+            return data;
+        }
+
+        async function detectLanguage() {
+            const data = await callLanguageApi("LanguageDetection");
+
+            const lang = data.results.documents[0].detectedLanguage;
+
+            document.getElementById("result").textContent =
+                `語言：${lang.name}\n代碼：${lang.iso6391Name}\n信心分數：${lang.confidenceScore}`;
+        }
+
+        async function analyzeSentiment() {
+            const data = await callLanguageApi("SentimentAnalysis");
+
+            const doc = data.results.documents[0];
+
+            document.getElementById("result").textContent =
+                `語意：${doc.sentiment}\n` +
+                `Positive：${doc.confidenceScores.positive}\n` +
+                `Negative：${doc.confidenceScores.negative}\n` +
+                `Neutral：${doc.confidenceScores.neutral}`;
+        }
+    </script>
+</body>
+</html>
